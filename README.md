@@ -14,7 +14,7 @@
   <li>Teams get continuity without changing their OpenClaw workflow.</li>
 </ul>
 
-<h2>How It Works (Simple)</h2>
+<h2>How It Works</h2>
 <ol>
   <li>User sends a message to an OpenClaw agent.</li>
   <li>OpenClaw retrieves relevant memory context.</li>
@@ -23,44 +23,34 @@
 </ol>
 
 ```mermaid
-flowchart LR
-  U["User Message"] --> O["OpenClaw Agent"]
-  O --> M["Hipocampus Memory (Recall)"]
-  M --> O
-  O --> R["Agent Response"]
-  O --> W["Hipocampus Memory (Save)"]
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant O as OpenClaw Agent
+  participant H as Hipocampus Memory
+
+  U->>O: Send message
+  O->>H: Recall relevant context
+  H-->>O: Return scoped memories
+  O-->>U: Respond with grounded answer
+  O->>H: Save durable new memory
 ```
 
-<h2>Designs</h2>
-<p>Customer-facing visuals for architecture and memory experience.</p>
+<div align="center">
+  <img src="./assets/recall.png" alt="Recall Experience" width="88%" />
+</div>
 
-<table>
-  <tr>
-    <td align="center" width="33%">
-      <img src="./assets/architecture_overview.png" alt="Architecture Overview" width="100%" />
-      <br />
-      <sub>Architecture Overview</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./assets/recall.png" alt="Recall Experience" width="100%" />
-      <br />
-      <sub>Recall Experience</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./assets/structured_event.png" alt="Structured Memory Events" width="100%" />
-      <br />
-      <sub>Structured Memory Events</sub>
-    </td>
-  </tr>
-</table>
-
-<h2>How It Scales (Advanced)</h2>
+<h2>How It Scales</h2>
 <ul>
   <li>Shared project memory aligns all agents on architecture and decisions.</li>
   <li>Private agent memory preserves role-specific preferences and operating style.</li>
   <li>Memory carries across sessions for long-running workstreams.</li>
   <li>Stored knowledge can be updated as new information supersedes old information.</li>
 </ul>
+
+<div align="center">
+  <img src="./assets/architecture_overview.png" alt="Architecture Overview" width="88%" />
+</div>
 
 <h2>Why It Is Production-Ready</h2>
 <ul>
@@ -70,7 +60,11 @@ flowchart LR
   <li>Operational tools for store, search, forget, and profile workflows.</li>
 </ul>
 
-<h2>Configuration (Operator)</h2>
+<div align="center">
+  <img src="./assets/structured_event.png" alt="Structured Memory Events" width="88%" />
+</div>
+
+<h2>Configuration</h2>
 <p>Set <code>HIPPOCAMPUS_OPENCLAW_API_KEY</code> or plugin <code>apiKey</code>.</p>
 
 <pre><code>{
