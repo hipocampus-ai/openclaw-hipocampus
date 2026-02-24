@@ -1,6 +1,24 @@
-# OpenClaw Hipocampus Plugin
+<h1 align="center">OpenClaw Hipocampus Plugin</h1>
 
-**Production-ready long-term memory for OpenClaw agents.**
+<p align="center">
+  <strong>Production-ready long-term memory for OpenClaw agents.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus#-configuration">Docs</a> ·
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus/issues/new?labels=bug">Report a bug</a> ·
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus/issues/new?labels=enhancement">Feature request</a> ·
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus/releases">Changelog</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus/blob/main/LICENSE"><img src="https://img.shields.io/github/license/hipocampus-ai/openclaw-hipocampus?label=license&logo=github" alt="License" /></a>
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus/issues"><img src="https://img.shields.io/github/issues/hipocampus-ai/openclaw-hipocampus" alt="Issues" /></a>
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus/commits/main"><img src="https://img.shields.io/github/last-commit/hipocampus-ai/openclaw-hipocampus" alt="Last Commit" /></a>
+  <a href="https://github.com/hipocampus-ai/openclaw-hipocampus"><img src="https://img.shields.io/github/commit-activity/m/hipocampus-ai/openclaw-hipocampus?label=commit%20activity" alt="Commit Activity" /></a>
+</p>
+
+OpenClaw Hipocampus is a memory layer for agent workflows. It helps agents preserve user preferences, project decisions, and continuity across sessions while keeping memory scoped for multi-agent collaboration.
 
 ![Recall Experience](./assets/recall.png)
 
