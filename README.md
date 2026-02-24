@@ -40,6 +40,81 @@ sequenceDiagram
   <img src="./assets/recall.png" alt="Recall Experience" width="88%" />
 </div>
 
+<h2>Input-Output Examples</h2>
+
+<h3>Example 1: Preference Continuity Across Sessions</h3>
+<pre><code># Input (Session A)
+openclaw agent --local --session-id pref-a --message "I prefer concise responses and local-first workflow."
+
+# Output
+Locked in: concise responses, local-first workflow.
+
+# Input (Session B)
+openclaw agent --local --session-id pref-b --message "How should you respond and operate for me?"
+
+# Output
+- Concise, direct responses.
+- Local-first workflow by default.
+</code></pre>
+
+<h3>Example 2: Shared Project Decision Across Agents</h3>
+<pre><code># Input (Agent alpha)
+openclaw agent --local --agent alpha --session-id proj-a --message "Project Orion uses TanStack Query; avoid Redux."
+
+# Output
+Saved project decision for Orion.
+
+# Input (Agent beta, same project)
+openclaw agent --local --agent beta --session-id proj-b --message "What data layer should we use for Orion?"
+
+# Output
+Use TanStack Query and avoid Redux.
+</code></pre>
+
+<h3>Tool-Level I/O Sample</h3>
+<pre><code>// Input
+{
+  "tool": "hippocampus_store",
+  "params": {
+    "text": "User prefers concise responses.",
+    "category": "preference",
+    "scope": "private"
+  }
+}
+
+// Output
+{
+  "content": [
+    { "type": "text", "text": "Stored memory: \"User prefers concise responses.\"" }
+  ],
+  "details": {
+    "category": "preference",
+    "targets": ["private"]
+  }
+}
+</code></pre>
+
+<h3>Sample Flow: Shared + Private Memory</h3>
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant A as Agent Alpha
+  participant B as Agent Beta
+  participant S as Shared Project Memory
+  participant PA as Alpha Private Memory
+  participant PB as Beta Private Memory
+
+  U->>A: "Project Orion uses TanStack Query."
+  A->>S: Save shared project decision
+  U->>A: "Keep responses terse."
+  A->>PA: Save alpha private preference
+  U->>B: "How should we build Orion?"
+  B->>S: Recall project decision
+  B->>PB: Recall beta private preferences
+  B-->>U: "Use TanStack Query." (without alpha-private style)
+```
+
 <h2>How It Scales</h2>
 <ul>
   <li>Shared project memory aligns all agents on architecture and decisions.</li>
