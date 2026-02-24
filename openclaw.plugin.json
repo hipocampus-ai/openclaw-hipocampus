@@ -1,0 +1,65 @@
+{
+  "id": "openclaw-hipocampus",
+  "kind": "memory",
+  "uiHints": {
+    "apiKey": {
+      "label": "Hippocampus API Key",
+      "sensitive": true,
+      "placeholder": "hpka_...",
+      "help": "Your API key for Hippocampus (or use ${HIPPOCAMPUS_OPENCLAW_API_KEY})"
+    },
+    "baseUrl": {
+      "label": "Hippocampus Base URL",
+      "placeholder": "http://127.0.0.1:8080",
+      "help": "Base URL for Hippocampus API"
+    },
+    "autoRecall": {
+      "label": "Auto Recall",
+      "help": "Recall relevant memories before each turn"
+    },
+    "autoCapture": {
+      "label": "Auto Capture",
+      "help": "Capture and store turn memory after each turn"
+    },
+    "maxRecallResults": {
+      "label": "Max Recall Results",
+      "placeholder": "10",
+      "help": "Maximum memories injected in prompt context"
+    },
+    "readjustEnabled": {
+      "label": "Single-pass Readjust",
+      "help": "Enable local reranking on same candidate set when confidence is low"
+    },
+    "readjustConfidenceThreshold": {
+      "label": "Readjust Threshold",
+      "placeholder": "0.62",
+      "help": "Confidence threshold to trigger local readjust"
+    },
+    "debug": {
+      "label": "Debug Logging",
+      "help": "Enable verbose plugin logs"
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiKey": { "type": "string" },
+      "baseUrl": { "type": "string" },
+      "autoRecall": { "type": "boolean" },
+      "autoCapture": { "type": "boolean" },
+      "maxRecallResults": { "type": "number", "minimum": 1, "maximum": 50 },
+      "profileFrequency": { "type": "number", "minimum": 1 },
+      "routingMode": { "type": "string", "enum": ["project_agent_hybrid"] },
+      "sharedBankNameTemplate": { "type": "string" },
+      "agentBankNameTemplate": { "type": "string" },
+      "readjustEnabled": { "type": "boolean" },
+      "readjustConfidenceThreshold": { "type": "number", "minimum": 0, "maximum": 1 },
+      "debug": { "type": "boolean" },
+      "recallTimeoutMs": { "type": "number", "minimum": 1000 },
+      "rememberTimeoutMs": { "type": "number", "minimum": 1000 },
+      "requestRetryAttempts": { "type": "number", "minimum": 0, "maximum": 5 }
+    },
+    "required": []
+  }
+}
