@@ -1,78 +1,94 @@
-<div align="center">
-  <img src="./assets/banner.jpg" alt="OpenClaw Hipocampus Banner" width="100%" />
-</div>
+# OpenClaw Hipocampus Plugin
 
-<h1>OpenClaw Hipocampus Plugin</h1>
+**Production-ready long-term memory for OpenClaw agents.**
 
-<p>Production-ready long-term memory for OpenClaw agents.</p>
+![Recall Experience](./assets/recall.png)
 
-<h2>What You Get</h2>
-<ul>
-  <li>Agents remember user preferences across sessions.</li>
-  <li>Project decisions stay consistent across multiple agents.</li>
-  <li>Memory is scoped to support collaboration and privacy.</li>
-  <li>Teams get continuity without changing their OpenClaw workflow.</li>
-</ul>
+## ✨ What You Get
 
-<h2>How It Works</h2>
-<ol>
-  <li>User sends a message to an OpenClaw agent.</li>
-  <li>OpenClaw retrieves relevant memory context.</li>
-  <li>The agent responds using current input + recalled context.</li>
-  <li>Useful new information is saved for future turns.</li>
-</ol>
+- 🧠 **Long-term memory** across sessions, not just one chat window.
+- 🤝 **Shared project memory** so multiple agents stay aligned.
+- 🔒 **Private agent memory** for role-specific preferences and behavior.
+- ⚡ **Fast memory usage** with recall + response + capture in one turn loop.
+- 🛠 **Operational tools** for storing, searching, forgetting, and profiling memory.
+
+## ⚙️ How It Works
+
+1. A user prompt enters OpenClaw.
+2. OpenClaw pulls relevant memory context from Hipocampus.
+3. The agent answers using current prompt + recalled context.
+4. New durable facts are captured for future turns.
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
-  participant O as OpenClaw Agent
-  participant H as Hipocampus Memory
+  participant O as OpenClaw
+  participant H as Hipocampus
 
-  U->>O: Send message
-  O->>H: Recall relevant context
-  H-->>O: Return scoped memories
-  O-->>U: Respond with grounded answer
-  O->>H: Save durable new memory
+  U->>O: Prompt
+  O->>H: Recall relevant memory
+  H-->>O: Scoped memory results
+  O-->>U: Grounded response
+  O->>H: Save new durable memory
 ```
 
-<div align="center">
-  <img src="./assets/recall.png" alt="Recall Experience" width="88%" />
-</div>
+## 🧪 Input → Output Examples
 
-<h2>Input-Output Examples</h2>
+### 1) Preference Continuity
 
-<h3>Example 1: Preference Continuity Across Sessions</h3>
-<pre><code># Input (Session A)
-openclaw agent --local --session-id pref-a --message "I prefer concise responses and local-first workflow."
+```text
+Prompt:
+"Keep your responses concise and prioritize local-first workflows."
 
-# Output
-Locked in: concise responses, local-first workflow.
+What OpenClaw gets from memory:
+- User prefers concise responses.
+- User prefers local-first workflow.
 
-# Input (Session B)
-openclaw agent --local --session-id pref-b --message "How should you respond and operate for me?"
+Assistant output:
+"Understood. I’ll keep responses concise and prioritize local-first workflows."
+```
 
-# Output
-- Concise, direct responses.
-- Local-first workflow by default.
-</code></pre>
+### 2) Shared Project Decision Across Agents
 
-<h3>Example 2: Shared Project Decision Across Agents</h3>
-<pre><code># Input (Agent alpha)
-openclaw agent --local --agent alpha --session-id proj-a --message "Project Orion uses TanStack Query; avoid Redux."
+```text
+Prompt (Agent A):
+"For Project Orion, use TanStack Query and avoid Redux."
 
-# Output
-Saved project decision for Orion.
+Later prompt (Agent B, same project):
+"What state/data layer should we use for Orion?"
 
-# Input (Agent beta, same project)
-openclaw agent --local --agent beta --session-id proj-b --message "What data layer should we use for Orion?"
+What OpenClaw gets from shared memory:
+- Project Orion uses TanStack Query.
+- Avoid Redux for Orion.
 
-# Output
-Use TanStack Query and avoid Redux.
-</code></pre>
+Assistant output:
+"Use TanStack Query for Orion and avoid Redux."
+```
 
-<h3>Tool-Level I/O Sample</h3>
-<pre><code>// Input
+### 3) Private Agent Behavior Isolation
+
+```text
+Prompt (Agent Alpha):
+"When you respond for me, keep it terse and bullet-pointed."
+
+Later prompt (Agent Beta):
+"How should you format responses for me?"
+
+What OpenClaw gets:
+- Beta private preferences (if any)
+- Shared project memory
+- Not Alpha private style preferences
+
+Assistant output:
+"I’ll follow your preferences and project context for this workspace."
+```
+
+## 🛠 Tool I/O Sample
+
+### `hippocampus_store`
+
+```json
 {
   "tool": "hippocampus_store",
   "params": {
@@ -81,68 +97,105 @@ Use TanStack Query and avoid Redux.
     "scope": "private"
   }
 }
+```
 
-// Output
+```json
 {
   "content": [
-    { "type": "text", "text": "Stored memory: \"User prefers concise responses.\"" }
+    {
+      "type": "text",
+      "text": "Stored memory: \"User prefers concise responses.\""
+    }
   ],
   "details": {
     "category": "preference",
     "targets": ["private"]
   }
 }
-</code></pre>
+```
 
-<h3>Sample Flow: Shared + Private Memory</h3>
+### `hippocampus_search`
+
+```json
+{
+  "tool": "hippocampus_search",
+  "params": {
+    "query": "What are the Orion architecture decisions?",
+    "scope": "shared",
+    "limit": 3
+  }
+}
+```
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Found 2 memories:\n\n1. Project Orion uses TanStack Query. (97%)\n2. Avoid Redux for Orion. (94%)"
+    }
+  ],
+  "details": {
+    "count": 2,
+    "memories": [
+      {
+        "id": "mem_a",
+        "content": "Project Orion uses TanStack Query.",
+        "similarity": 0.97,
+        "bankId": "bank_shared"
+      },
+      {
+        "id": "mem_b",
+        "content": "Avoid Redux for Orion.",
+        "similarity": 0.94,
+        "bankId": "bank_shared"
+      }
+    ]
+  }
+}
+```
+
+## 🧭 Sample Flow (Shared + Private Memory)
+
 ```mermaid
 sequenceDiagram
   autonumber
   participant U as User
   participant A as Agent Alpha
   participant B as Agent Beta
-  participant S as Shared Project Memory
+  participant S as Shared Memory
   participant PA as Alpha Private Memory
   participant PB as Beta Private Memory
 
   U->>A: "Project Orion uses TanStack Query."
   A->>S: Save shared project decision
-  U->>A: "Keep responses terse."
-  A->>PA: Save alpha private preference
+
+  U->>A: "Keep responses terse for me."
+  A->>PA: Save alpha private style
+
   U->>B: "How should we build Orion?"
-  B->>S: Recall project decision
+  B->>S: Recall shared decisions
   B->>PB: Recall beta private preferences
-  B-->>U: "Use TanStack Query." (without alpha-private style)
+  B-->>U: Response uses shared decisions + beta scope
 ```
 
-<h2>How It Scales</h2>
-<ul>
-  <li>Shared project memory aligns all agents on architecture and decisions.</li>
-  <li>Private agent memory preserves role-specific preferences and operating style.</li>
-  <li>Memory carries across sessions for long-running workstreams.</li>
-  <li>Stored knowledge can be updated as new information supersedes old information.</li>
-</ul>
+## 🚀 Why It Is Production-Ready
 
-<div align="center">
-  <img src="./assets/architecture_overview.png" alt="Architecture Overview" width="88%" />
-</div>
+- ✅ Graceful fallback if memory services are temporarily unavailable.
+- ✅ Scoped memory model to reduce cross-agent leakage.
+- ✅ Deterministic write behavior to reduce duplicate memory entries.
+- ✅ Recall, store, forget, and profile tools for operational control.
 
-<h2>Why It Is Production-Ready</h2>
-<ul>
-  <li>Graceful fallback behavior if memory is temporarily unavailable.</li>
-  <li>Scoped memory model to reduce cross-agent leakage.</li>
-  <li>Deterministic write behavior to reduce duplicate memory entries.</li>
-  <li>Operational tools for store, search, forget, and profile workflows.</li>
-</ul>
+![Architecture Overview](./assets/architecture_overview.png)
 
-<div align="center">
-  <img src="./assets/structured_event.png" alt="Structured Memory Events" width="88%" />
-</div>
+![Structured Memory Events](./assets/structured_event.png)
 
-<h2>Configuration</h2>
-<p>Set <code>HIPPOCAMPUS_OPENCLAW_API_KEY</code> or plugin <code>apiKey</code>.</p>
+## 🔧 Configuration
 
-<pre><code>{
+Set `HIPPOCAMPUS_OPENCLAW_API_KEY` or plugin `apiKey`.
+
+```json
+{
   "plugins": {
     "entries": {
       "openclaw-hipocampus": {
@@ -160,17 +213,20 @@ sequenceDiagram
       }
     }
   }
-}</code></pre>
+}
+```
 
-<h2>Development</h2>
-<pre><code>pnpm install
+## 🧪 Development
+
+```bash
+pnpm install
 pnpm test
-pnpm build</code></pre>
+pnpm build
+```
 
-<h2>Smoke Validation</h2>
-<ol>
-  <li>Start Hippocampus local server (<code>:8080</code>).</li>
-  <li>Install plugin into OpenClaw.</li>
-  <li>Restart OpenClaw.</li>
-  <li>Run preference/project memory scenarios.</li>
-</ol>
+## ✅ Smoke Validation
+
+1. Start Hipocampus local server (`:8080`).
+2. Install plugin into OpenClaw.
+3. Restart OpenClaw.
+4. Run preference and project-memory scenarios.
