@@ -1,4 +1,4 @@
-<h1 align="center">OpenClaw Hipocampus Plugin</h1>
+<div align="center">   <img src="./assets/banner.jpg" alt="OpenClaw Hipocampus Banner" width="100%" /> </div>
 
 <p align="center">
   <strong>Production-ready long-term memory for OpenClaw agents.</strong>
@@ -50,6 +50,8 @@ sequenceDiagram
   O-->>U: Grounded response
   O->>H: Save new durable memory
 ```
+
+![Structured Memory Events](./assets/structured_event.png)
 
 ## 🧪 Input → Output Examples
 
@@ -205,8 +207,6 @@ sequenceDiagram
 - ✅ Recall, store, forget, and profile tools for operational control.
 
 ![Architecture Overview](./assets/architecture_overview.png)
-
-![Structured Memory Events](./assets/structured_event.png)
 
 ## 🔧 Configuration
 
