@@ -20,6 +20,7 @@ export class BankResolver {
   private readonly logger: Logger
   private readonly cache = new Map<string, CacheEntry>()
   private readonly bankIdToKey = new Map<string, string>()
+  private readonly inFlight = new Map<string, Promise<ResolvedBanks>>()
   private readonly cacheTtlMs: number
 
   constructor(
@@ -35,6 +36,18 @@ export class BankResolver {
   }
 
   async resolveForTurn(turn: TurnContext): Promise<ResolvedBanks> {
+    const inflightKey = `${turn.projectId}::${turn.agentId}`
+    const existing = this.inFlight.get(inflightKey)
+    if (existing) return existing
+
+    const task = this.resolveForTurnInternal(turn).finally(() => {
+      this.inFlight.delete(inflightKey)
+    })
+    this.inFlight.set(inflightKey, task)
+    return task
+  }
+
+  private async resolveForTurnInternal(turn: TurnContext): Promise<ResolvedBanks> {
     const now = Date.now()
     const sharedKey = this.sharedKey(turn)
     const privateKey = this.privateKey(turn)
@@ -179,20 +192,49 @@ export class BankResolver {
   }
 
   private sharedBankName(turn: TurnContext): string {
-    return renderTemplate(this.cfg.sharedBankNameTemplate, {
-      tenant_id: turn.tenantId,
-      project_id: turn.projectId,
-      agent_id: turn.agentId,
-      session_id: turn.sessionId,
-    })
+    return renderTemplate(this.cfg.sharedBankNameTemplate, this.templateVars(turn))
   }
 
   private privateBankName(turn: TurnContext): string {
-    return renderTemplate(this.cfg.agentBankNameTemplate, {
+    return renderTemplate(this.cfg.agentBankNameTemplate, this.templateVars(turn))
+  }
+
+  private templateVars(turn: TurnContext): Record<string, string> {
+    return {
       tenant_id: turn.tenantId,
       project_id: turn.projectId,
       agent_id: turn.agentId,
       session_id: turn.sessionId,
-    })
+      tenant_label: toHumanLabel(turn.tenantId, 'Tenant'),
+      project_label: toHumanLabel(turn.projectId, 'Project'),
+      agent_label: toHumanLabel(turn.agentId, 'Agent'),
+      session_label: toHumanLabel(turn.sessionId, 'Session'),
+    }
   }
+}
+
+function toHumanLabel(input: string, fallback: string): string {
+  const raw = String(input ?? '').trim()
+  if (!raw) return fallback
+
+  if (/^(proj|tenant|sess)_[a-f0-9]{12,}$/i.test(raw)) {
+    return fallback
+  }
+
+  const cleaned = raw
+    .replace(/^oc::/i, '')
+    .replace(/[_:.-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!cleaned) return fallback
+
+  return cleaned
+    .split(' ')
+    .map((word) => {
+      if (/^[A-Z0-9]+$/.test(word)) return word
+      if (word.length <= 2) return word.toUpperCase()
+      return word[0].toUpperCase() + word.slice(1).toLowerCase()
+    })
+    .join(' ')
 }

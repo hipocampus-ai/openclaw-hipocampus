@@ -73,11 +73,11 @@ export function parseConfig(raw: unknown): HippocampusPluginConfig {
     sharedBankNameTemplate:
       typeof cfg.sharedBankNameTemplate === 'string'
         ? cfg.sharedBankNameTemplate
-        : 'oc::{project_id}::shared',
+        : 'OpenClaw {project_label} Shared Memory',
     agentBankNameTemplate:
       typeof cfg.agentBankNameTemplate === 'string'
         ? cfg.agentBankNameTemplate
-        : 'oc::{project_id}::agent::{agent_id}',
+        : 'OpenClaw {project_label} {agent_label} Private Memory',
     readjustEnabled: parseBool(cfg.readjustEnabled, true),
     readjustConfidenceThreshold: Math.max(
       0,

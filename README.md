@@ -35,6 +35,8 @@
           "baseUrl": "http://localhost:8080",
           "autoRecall": true,
           "autoCapture": true,
+          "sharedBankNameTemplate": "OpenClaw {project_label} Shared Memory",
+          "agentBankNameTemplate": "OpenClaw {project_label} {agent_label} Private Memory",
           "maxRecallResults": 10,
           "readjustEnabled": true,
           "readjustConfidenceThreshold": 0.62

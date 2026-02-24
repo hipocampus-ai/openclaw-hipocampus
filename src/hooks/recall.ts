@@ -117,7 +117,7 @@ async function recallForScope(options: {
 
   const run = async (targetBankId: string): Promise<RecalledMemory[]> => {
     const response = await client.recall(targetBankId, payload)
-    return (response.memories ?? []).map((item) => ({
+    const mapped = (response.memories ?? []).map((item) => ({
       id: item.memory.id,
       content: item.memory.content,
       memoryType: item.memory.memory_type,
@@ -133,6 +133,7 @@ async function recallForScope(options: {
       bankScope: scope,
       metadata: item.memory.provenance ?? undefined,
     }))
+    return filterScopeMemories(mapped, scope)
   }
 
   try {
@@ -158,6 +159,29 @@ async function recallForScope(options: {
       return []
     }
   }
+}
+
+function filterScopeMemories(
+  memories: RecalledMemory[],
+  scope: 'shared' | 'private',
+): RecalledMemory[] {
+  if (scope !== 'shared') return memories
+
+  return memories.filter((memory) => {
+    const targetScope = readTargetScope(memory.metadata)
+    if (targetScope && targetScope !== 'shared') {
+      return false
+    }
+
+    const category = inferMemoryCategory(memory.content)
+    return category === 'project_decision' || category === 'fact'
+  })
+}
+
+function readTargetScope(metadata: Record<string, unknown> | undefined): string | undefined {
+  if (!metadata) return undefined
+  const value = metadata.target_scope
+  return typeof value === 'string' ? value : undefined
 }
 
 function dedupeMemories(memories: RecalledMemory[]): RecalledMemory[] {

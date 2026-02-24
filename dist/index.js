@@ -49,6 +49,7 @@ var BankResolver = class {
   logger;
   cache = /* @__PURE__ */ new Map();
   bankIdToKey = /* @__PURE__ */ new Map();
+  inFlight = /* @__PURE__ */ new Map();
   cacheTtlMs;
   constructor(client, cfg, logger, options) {
     this.client = client;
@@ -57,6 +58,16 @@ var BankResolver = class {
     this.cacheTtlMs = options?.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
   }
   async resolveForTurn(turn) {
+    const inflightKey = `${turn.projectId}::${turn.agentId}`;
+    const existing = this.inFlight.get(inflightKey);
+    if (existing) return existing;
+    const task = this.resolveForTurnInternal(turn).finally(() => {
+      this.inFlight.delete(inflightKey);
+    });
+    this.inFlight.set(inflightKey, task);
+    return task;
+  }
+  async resolveForTurnInternal(turn) {
     const now = Date.now();
     const sharedKey = this.sharedKey(turn);
     const privateKey = this.privateKey(turn);
@@ -162,22 +173,38 @@ var BankResolver = class {
     });
   }
   sharedBankName(turn) {
-    return renderTemplate(this.cfg.sharedBankNameTemplate, {
-      tenant_id: turn.tenantId,
-      project_id: turn.projectId,
-      agent_id: turn.agentId,
-      session_id: turn.sessionId
-    });
+    return renderTemplate(this.cfg.sharedBankNameTemplate, this.templateVars(turn));
   }
   privateBankName(turn) {
-    return renderTemplate(this.cfg.agentBankNameTemplate, {
+    return renderTemplate(this.cfg.agentBankNameTemplate, this.templateVars(turn));
+  }
+  templateVars(turn) {
+    return {
       tenant_id: turn.tenantId,
       project_id: turn.projectId,
       agent_id: turn.agentId,
-      session_id: turn.sessionId
-    });
+      session_id: turn.sessionId,
+      tenant_label: toHumanLabel(turn.tenantId, "Tenant"),
+      project_label: toHumanLabel(turn.projectId, "Project"),
+      agent_label: toHumanLabel(turn.agentId, "Agent"),
+      session_label: toHumanLabel(turn.sessionId, "Session")
+    };
   }
 };
+function toHumanLabel(input, fallback) {
+  const raw = String(input ?? "").trim();
+  if (!raw) return fallback;
+  if (/^(proj|tenant|sess)_[a-f0-9]{12,}$/i.test(raw)) {
+    return fallback;
+  }
+  const cleaned = raw.replace(/^oc::/i, "").replace(/[_:.-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!cleaned) return fallback;
+  return cleaned.split(" ").map((word) => {
+    if (/^[A-Z0-9]+$/.test(word)) return word;
+    if (word.length <= 2) return word.toUpperCase();
+    return word[0].toUpperCase() + word.slice(1).toLowerCase();
+  }).join(" ");
+}
 
 // src/types.ts
 var HippocampusHttpError = class extends Error {
@@ -421,8 +448,8 @@ function parseConfig(raw) {
     maxRecallResults: Math.max(1, Math.min(50, parseNum(cfg.maxRecallResults, 10))),
     profileFrequency: Math.max(1, parseNum(cfg.profileFrequency, 50)),
     routingMode: "project_agent_hybrid",
-    sharedBankNameTemplate: typeof cfg.sharedBankNameTemplate === "string" ? cfg.sharedBankNameTemplate : "oc::{project_id}::shared",
-    agentBankNameTemplate: typeof cfg.agentBankNameTemplate === "string" ? cfg.agentBankNameTemplate : "oc::{project_id}::agent::{agent_id}",
+    sharedBankNameTemplate: typeof cfg.sharedBankNameTemplate === "string" ? cfg.sharedBankNameTemplate : "OpenClaw {project_label} Shared Memory",
+    agentBankNameTemplate: typeof cfg.agentBankNameTemplate === "string" ? cfg.agentBankNameTemplate : "OpenClaw {project_label} {agent_label} Private Memory",
     readjustEnabled: parseBool(cfg.readjustEnabled, true),
     readjustConfidenceThreshold: Math.max(
       0,
@@ -494,18 +521,25 @@ function latestUserText(messages) {
 // src/memory.ts
 function inferMemoryCategory(content) {
   const lower = content.toLowerCase();
-  if (/(\bi\s+(prefer|like|love|hate|want|need)\b|\balways\b|\bnever\b)/i.test(lower)) {
+  if (/(\bproject decision\b|\bproject-level\b|\bshared rule\b|\bshared decision\b|\barchitecture\b|\btech stack\b|\bcanonical\b|\buse\b.+\binstead\b|\bavoid\b)/i.test(
+    lower
+  )) {
+    return "project_decision";
+  }
+  if (/(\bprivate\b|\bonly this agent\b|\bfor this agent\b|\bagent-only\b|\bpersonal\b)/i.test(
+    lower
+  )) {
+    return "preference";
+  }
+  if (/(\bi\s+(prefer|like|love|hate|want|need)\b|\bmy\s+preferred\b|\bpreference\b|\balways\b|\bnever\b)/i.test(
+    lower
+  )) {
     return "preference";
   }
   if (/(\bworkflow\b|\brun\b|\blint\b|\bbuild\b|\bdeploy\b|\btest\b|\blocally\b|\bcommand\b|\btooling\b)/i.test(
     lower
   )) {
     return "workflow";
-  }
-  if (/(\bproject\b|\barchitecture\b|\btech stack\b|\bdecision\b|\buse\b.+\binstead\b|\bavoid\b)/i.test(
-    lower
-  )) {
-    return "project_decision";
   }
   return "fact";
 }
@@ -529,10 +563,10 @@ function confidenceForMemoryType(memoryType) {
 function categoryTargets(category) {
   switch (category) {
     case "project_decision":
-    case "fact":
       return ["shared"];
     case "preference":
     case "workflow":
+    case "fact":
     default:
       return ["private"];
   }
@@ -558,6 +592,7 @@ function toRelativeTime(timestampIso) {
 function isLikelyQuestion(input) {
   const text = input.trim();
   if (!text) return false;
+  if (text.includes("?")) return true;
   if (text.endsWith("?")) return true;
   return /^(who|what|when|where|why|how|can|could|would|should|will|do|does|did|is|are|am)\b/i.test(
     text
@@ -900,7 +935,7 @@ async function recallForScope(options) {
   let bankId = options.bankId;
   const run = async (targetBankId) => {
     const response = await client.recall(targetBankId, payload);
-    return (response.memories ?? []).map((item) => ({
+    const mapped = (response.memories ?? []).map((item) => ({
       id: item.memory.id,
       content: item.memory.content,
       memoryType: item.memory.memory_type,
@@ -916,6 +951,7 @@ async function recallForScope(options) {
       bankScope: scope,
       metadata: item.memory.provenance ?? void 0
     }));
+    return filterScopeMemories(mapped, scope);
   };
   try {
     return await run(bankId);
@@ -937,6 +973,22 @@ async function recallForScope(options) {
       return [];
     }
   }
+}
+function filterScopeMemories(memories, scope) {
+  if (scope !== "shared") return memories;
+  return memories.filter((memory) => {
+    const targetScope = readTargetScope(memory.metadata);
+    if (targetScope && targetScope !== "shared") {
+      return false;
+    }
+    const category = inferMemoryCategory(memory.content);
+    return category === "project_decision" || category === "fact";
+  });
+}
+function readTargetScope(metadata) {
+  if (!metadata) return void 0;
+  const value = metadata.target_scope;
+  return typeof value === "string" ? value : void 0;
 }
 function dedupeMemories(memories) {
   const best = /* @__PURE__ */ new Map();

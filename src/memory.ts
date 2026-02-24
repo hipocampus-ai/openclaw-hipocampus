@@ -5,7 +5,27 @@ export const CONTEXT_TAG = 'hippocampus-context'
 export function inferMemoryCategory(content: string): MemoryCategory {
   const lower = content.toLowerCase()
 
-  if (/(\bi\s+(prefer|like|love|hate|want|need)\b|\balways\b|\bnever\b)/i.test(lower)) {
+  if (
+    /(\bproject decision\b|\bproject-level\b|\bshared rule\b|\bshared decision\b|\barchitecture\b|\btech stack\b|\bcanonical\b|\buse\b.+\binstead\b|\bavoid\b)/i.test(
+      lower,
+    )
+  ) {
+    return 'project_decision'
+  }
+
+  if (
+    /(\bprivate\b|\bonly this agent\b|\bfor this agent\b|\bagent-only\b|\bpersonal\b)/i.test(
+      lower,
+    )
+  ) {
+    return 'preference'
+  }
+
+  if (
+    /(\bi\s+(prefer|like|love|hate|want|need)\b|\bmy\s+preferred\b|\bpreference\b|\balways\b|\bnever\b)/i.test(
+      lower,
+    )
+  ) {
     return 'preference'
   }
 
@@ -15,14 +35,6 @@ export function inferMemoryCategory(content: string): MemoryCategory {
     )
   ) {
     return 'workflow'
-  }
-
-  if (
-    /(\bproject\b|\barchitecture\b|\btech stack\b|\bdecision\b|\buse\b.+\binstead\b|\bavoid\b)/i.test(
-      lower,
-    )
-  ) {
-    return 'project_decision'
   }
 
   return 'fact'
@@ -53,10 +65,10 @@ export function confidenceForMemoryType(
 export function categoryTargets(category: MemoryCategory): BankScope[] {
   switch (category) {
     case 'project_decision':
-    case 'fact':
       return ['shared']
     case 'preference':
     case 'workflow':
+    case 'fact':
     default:
       return ['private']
   }
@@ -95,6 +107,7 @@ export function compactText(input: string, max = 140): string {
 export function isLikelyQuestion(input: string): boolean {
   const text = input.trim()
   if (!text) return false
+  if (text.includes('?')) return true
   if (text.endsWith('?')) return true
   return /^(who|what|when|where|why|how|can|could|would|should|will|do|does|did|is|are|am)\b/i.test(
     text,
