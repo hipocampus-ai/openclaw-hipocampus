@@ -1,4 +1,4 @@
-<div align="center">   <img src="./assets/banner.jpg" alt="OpenClaw Hipocampus Banner" width="100%" /> </div>
+<div align="center">   <img src="./assets/banner.jpeg" alt="OpenClaw Hipocampus Banner" width="100%" /> </div>
 
 <p align="center">
   <strong>Production-ready long-term memory for OpenClaw agents.</strong>
@@ -20,7 +20,7 @@
 
 OpenClaw Hipocampus is a memory layer for agent workflows. It helps agents preserve user preferences, project decisions, and continuity across sessions while keeping memory scoped for multi-agent collaboration.
 
-![Recall Experience](./assets/recall.png)
+![Hipocampus Hero](./assets/hero.jpeg)
 
 ## ✨ What You Get
 
